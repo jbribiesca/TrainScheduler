@@ -71,4 +71,34 @@ $(document).ready(function () {
         db.ref("TrainScheduler/" + tmpKey).remove();
     });
 
+    setInterval(updatePage, 1000 * 60);
+    function updatePage() {
+        $("#trains").empty();
+        db.ref("TrainScheduler/").once("value", function (snapshot) {
+            snapshot.forEach(function (childSnapshot) {
+                
+                var trainName = childSnapshot.val().name;
+                var trainDes = childSnapshot.val().des;
+                var trainFirst = childSnapshot.val().first;
+                var trainFreq = childSnapshot.val().freq;
+                var trainKey = childSnapshot.key;
+
+                var firstTimeConverted = moment(trainFirst, "HH:mm").subtract(1, "years");
+                var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+                var tRemainder = diffTime % trainFreq;
+                var tMinutesTillTrain = trainFreq - tRemainder;
+                var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+
+                var newRow = $("<tr>").attr("ID", trainKey).append(
+                    $("<td>").text(trainName),
+                    $("<td>").text(trainDes),
+                    $("<td>").text(trainFreq),
+                    $("<td>").text(moment(nextTrain).format("hh:mm")),
+                    $("<td>").text(tMinutesTillTrain),
+                    $("<button>").addClass("trainActions").text("Delete").attr("data-attr", trainKey),
+                );
+                $("#trains").append(newRow);
+            })
+        })
+    }
 });
